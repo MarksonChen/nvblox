@@ -59,8 +59,7 @@ void getInvalidDepthMaskAsync(const DepthImage& depth_image,
   CHECK_EQ(depth_image.rows(), mask_ptr->rows());
   CHECK_EQ(depth_image.cols(), mask_ptr->cols());
   // ROI is the whole image
-  const NppiSize roi_size{.width = depth_image.cols(),
-                          .height = depth_image.rows()};
+  const NppiSize roi_size{depth_image.cols(), depth_image.rows()};
 
   checkNppErrors(nppiCompareC_32f_C1R_Ctx(
       depth_image.dataConstPtr(),          // pSrc
@@ -80,10 +79,9 @@ void dilateMask3x3Async(const MonoImage& mask_image,
   CHECK_NOTNULL(mask_dilated_ptr);
   CHECK_EQ(mask_image.rows(), mask_dilated_ptr->rows());
   CHECK_EQ(mask_image.cols(), mask_dilated_ptr->cols());
-  const NppiSize roi_size{.width = mask_image.cols(),
-                          .height = mask_image.rows()};
-  const NppiSize size{.width = mask_image.cols(), .height = mask_image.rows()};
-  const NppiPoint offset{.x = 0, .y = 0};
+  const NppiSize roi_size{mask_image.cols(), mask_image.rows()};
+  const NppiSize size{mask_image.cols(), mask_image.rows()};
+  const NppiPoint offset{0, 0};
   checkNppErrors(nppiDilate3x3Border_8u_C1R_Ctx(
       mask_image.dataConstPtr(),                   // pSrc
       mask_image.cols() * sizeof(uint8_t),         // nSrcStep
@@ -104,8 +102,7 @@ void maskedSetAsync(const MonoImage& mask, const float value,
   CHECK_EQ(depth_image_ptr->rows(), mask.rows());
   CHECK_EQ(depth_image_ptr->cols(), mask.cols());
   // Work on the whole image
-  const NppiSize roi_size{.width = depth_image_ptr->cols(),
-                          .height = depth_image_ptr->rows()};
+  const NppiSize roi_size{depth_image_ptr->cols(), depth_image_ptr->rows()};
   checkNppErrors(nppiSet_32f_C1MR_Ctx(
       value,                                    // nValue,
       depth_image_ptr->dataPtr(),               // pDst,
@@ -126,7 +123,7 @@ void setGreaterThanThresholdToValue(const MonoImage& image,
   CHECK_EQ(image.rows(), image_thresholded->rows());
   CHECK_EQ(image.cols(), image_thresholded->cols());
 
-  const NppiSize roi_size{.width = image.cols(), .height = image.rows()};
+  const NppiSize roi_size{image.cols(), image.rows()};
 
   checkNppErrors(nppiThreshold_Val_8u_C1R_Ctx(
       image.dataConstPtr(),                         // pSrc

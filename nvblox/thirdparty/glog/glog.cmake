@@ -19,6 +19,11 @@ else()
   # Let's use that mechanism once we support a more recent version of cmake.
   option(WITH_GFLAGS "USE gflags" OFF)
 
+  # glog 0.5.0's port.cc redefines snprintf which conflicts with MSVC >=2015
+  if(MSVC)
+    add_compile_definitions(HAVE_SNPRINTF)
+  endif()
+
   include(FetchContent)
   FetchContent_Declare(
     ext_glog

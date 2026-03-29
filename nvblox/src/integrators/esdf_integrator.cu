@@ -318,9 +318,9 @@ void EsdfIntegrator::integrateSliceTemplate(
 void EsdfIntegrator::integrateSlice(const TsdfLayer& tsdf_layer,
                                     const std::vector<Index3D>& block_indices,
                                     EsdfLayer* esdf_layer) {
-  ConstantZSliceDescription slice_description{.z_min_m = esdf_slice_min_height_,
-                                              .z_max_m = esdf_slice_max_height_,
-                                              .z_output_m = esdf_slice_height_};
+  ConstantZSliceDescription slice_description{esdf_slice_min_height_,
+                                              esdf_slice_max_height_,
+                                              esdf_slice_height_};
   integrateSliceTemplate<TsdfLayer>(tsdf_layer, block_indices,
                                     slice_description, esdf_layer);
 }
@@ -329,9 +329,9 @@ void EsdfIntegrator::integrateSlice(const TsdfLayer& tsdf_layer,
                                     const FreespaceLayer& freespace_layer,
                                     const std::vector<Index3D>& block_indices,
                                     EsdfLayer* esdf_layer) {
-  ConstantZSliceDescription slice_description{.z_min_m = esdf_slice_min_height_,
-                                              .z_max_m = esdf_slice_max_height_,
-                                              .z_output_m = esdf_slice_height_};
+  ConstantZSliceDescription slice_description{esdf_slice_min_height_,
+                                              esdf_slice_max_height_,
+                                              esdf_slice_height_};
   integrateSliceTemplate<TsdfLayer>(tsdf_layer, block_indices,
                                     slice_description, esdf_layer,
                                     &freespace_layer);
@@ -340,9 +340,9 @@ void EsdfIntegrator::integrateSlice(const TsdfLayer& tsdf_layer,
 void EsdfIntegrator::integrateSlice(const OccupancyLayer& occupancy_layer,
                                     const std::vector<Index3D>& block_indices,
                                     EsdfLayer* esdf_layer) {
-  ConstantZSliceDescription slice_description{.z_min_m = esdf_slice_min_height_,
-                                              .z_max_m = esdf_slice_max_height_,
-                                              .z_output_m = esdf_slice_height_};
+  ConstantZSliceDescription slice_description{esdf_slice_min_height_,
+                                              esdf_slice_max_height_,
+                                              esdf_slice_height_};
   integrateSliceTemplate<OccupancyLayer>(occupancy_layer, block_indices,
                                          slice_description, esdf_layer);
 }
@@ -352,10 +352,10 @@ void EsdfIntegrator::integrateSlice(const TsdfLayer& tsdf_layer,
                                     const Plane& ground_plane,
                                     EsdfLayer* esdf_layer) {
   PlanarSliceDescription slice_description{
-      .ground_plane = checkForVerticalPlane(ground_plane),
-      .slice_height_above_plane_m = slice_height_above_plane_m_,
-      .slice_height_thickness_m = slice_height_thickness_m_,
-      .z_output_m = esdf_slice_height_};
+      checkForVerticalPlane(ground_plane),
+      slice_height_above_plane_m_,
+      slice_height_thickness_m_,
+      esdf_slice_height_};
   integrateSliceTemplate<TsdfLayer>(tsdf_layer, block_indices,
                                     slice_description, esdf_layer);
 }
@@ -366,10 +366,10 @@ void EsdfIntegrator::integrateSlice(const TsdfLayer& tsdf_layer,
                                     const Plane& ground_plane,
                                     EsdfLayer* esdf_layer) {
   PlanarSliceDescription slice_description{
-      .ground_plane = checkForVerticalPlane(ground_plane),
-      .slice_height_above_plane_m = slice_height_above_plane_m_,
-      .slice_height_thickness_m = slice_height_thickness_m_,
-      .z_output_m = esdf_slice_height_};
+      checkForVerticalPlane(ground_plane),
+      slice_height_above_plane_m_,
+      slice_height_thickness_m_,
+      esdf_slice_height_};
   integrateSliceTemplate<TsdfLayer>(tsdf_layer, block_indices,
                                     slice_description, esdf_layer,
                                     &freespace_layer);
@@ -380,10 +380,10 @@ void EsdfIntegrator::integrateSlice(const OccupancyLayer& occupancy_layer,
                                     const Plane& ground_plane,
                                     EsdfLayer* esdf_layer) {
   PlanarSliceDescription slice_description{
-      .ground_plane = checkForVerticalPlane(ground_plane),
-      .slice_height_above_plane_m = slice_height_above_plane_m_,
-      .slice_height_thickness_m = slice_height_thickness_m_,
-      .z_output_m = esdf_slice_height_};
+      checkForVerticalPlane(ground_plane),
+      slice_height_above_plane_m_,
+      slice_height_thickness_m_,
+      esdf_slice_height_};
   integrateSliceTemplate<OccupancyLayer>(occupancy_layer, block_indices,
                                          slice_description, esdf_layer);
 }

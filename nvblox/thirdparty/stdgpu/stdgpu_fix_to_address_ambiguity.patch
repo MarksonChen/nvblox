@@ -1,0 +1,58 @@
+diff --git a/src/stdgpu/impl/memory_detail.h b/src/stdgpu/impl/memory_detail.h
+index 33238eb..b9f69aa 100644
+--- a/src/stdgpu/impl/memory_detail.h
++++ b/src/stdgpu/impl/memory_detail.h
+@@ -111,7 +111,7 @@ public:
+     STDGPU_HOST_DEVICE void
+     operator()(const index64_t i)
+     {
+-        construct_at(to_address(_begin + i), _value);
++        construct_at(stdgpu::to_address(_begin + i), _value);
+     }
+ 
+ private:
+@@ -134,7 +134,7 @@ public:
+     {
+         // Directly dereference _begin instead of trying to get its raw pointer.
+         // This adds support for transform_iterator, etc. which neither have operator->() nor get().
+-        construct_at(to_address(_output_begin + i), _begin[i]);
++        construct_at(stdgpu::to_address(_output_begin + i), _begin[i]);
+     }
+ 
+ private:
+@@ -154,7 +154,7 @@ public:
+     STDGPU_HOST_DEVICE void
+     operator()(const index64_t i)
+     {
+-        destroy_at(to_address(_first + i));
++        destroy_at(stdgpu::to_address(_first + i));
+     }
+ 
+ private:
+@@ -639,11 +639,11 @@ to_address(const Ptr& p) noexcept
+ {
+     if constexpr (detail::has_arrow_operator_v<Ptr>)
+     {
+-        return to_address(p.operator->());
++        return stdgpu::to_address(p.operator->());
+     }
+     else if constexpr (!detail::has_arrow_operator_v<Ptr> && detail::has_get_v<Ptr>)
+     {
+-        return to_address(p.get());
++        return stdgpu::to_address(p.get());
+     }
+     else
+     {
+diff --git a/src/stdgpu/impl/unordered_base_detail.cuh b/src/stdgpu/impl/unordered_base_detail.cuh
+index ad72e0f..d33a48f 100644
+--- a/src/stdgpu/impl/unordered_base_detail.cuh
++++ b/src/stdgpu/impl/unordered_base_detail.cuh
+@@ -485,7 +485,7 @@ public:
+     STDGPU_DEVICE_ONLY void
+     operator()(const index_t i)
+     {
+-        _base.insert(*to_address(_begin + i));
++        _base.insert(*stdgpu::to_address(_begin + i));
+     }
+ 
+ private:

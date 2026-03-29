@@ -121,7 +121,11 @@ TYPED_TEST(TsdfDecayIntegratorTestFixture, SingleDecayWithExclusionList) {
 
   decay_integrator.decay<TypeParam>(
       &layer_decayed,
-      DecayBlockExclusionOptions{.block_indices_to_exclude = excluded_indices},
+      [&]() {
+        DecayBlockExclusionOptions opts;
+        opts.block_indices_to_exclude = excluded_indices;
+        return opts;
+      }(),
       std::nullopt, CudaStreamOwning());
 
   // Check that weight has not changed for blocks in exclusion list

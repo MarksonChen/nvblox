@@ -10,6 +10,7 @@
 #
 from typing import Any
 import os
+import sys
 
 import torch
 
@@ -22,8 +23,12 @@ def get_module_path() -> str:
 
 
 def get_nvblox_py_library_path() -> str:
-    """Get the path to the nvblox_torch .so library."""
-    path = os.path.join(get_module_path(), 'nvblox_torch/cpp/libpy_nvblox.so')
+    """Get the path to the nvblox_torch shared library."""
+    if sys.platform == 'win32':
+        lib_name = 'py_nvblox.dll'
+    else:
+        lib_name = 'libpy_nvblox.so'
+    path = os.path.join(get_module_path(), f'nvblox_torch/cpp/{lib_name}')
     return path
 
 

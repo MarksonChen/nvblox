@@ -40,7 +40,7 @@
 TAGS
 
 # Build files
-*build
+*build*
 *install
 
 # Python

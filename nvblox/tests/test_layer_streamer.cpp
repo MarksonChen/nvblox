@@ -420,8 +420,12 @@ TYPED_TEST(LayerStreamerOldestBlocksTestFixture, ExcludeBlocksAboveHeight) {
   // Get back the blocks
   const auto streamable_blocks = layer_streamer.getNBlocks(
       block_indices.size(),
-      BlockExclusionParams{.exclusion_height_m = kBlockHeightLimitM,
-                           .block_size_m = kBlockSizeM});
+      [&]() {
+        BlockExclusionParams p;
+        p.exclusion_height_m = kBlockHeightLimitM;
+        p.block_size_m = kBlockSizeM;
+        return p;
+      }());
 
   // Check that some were actually excluded
   EXPECT_LT(streamable_blocks.size(), block_indices.size());
@@ -458,9 +462,13 @@ TYPED_TEST(LayerStreamerOldestBlocksTestFixture, ExcludeBlocksOutsideRadius) {
   // Get back the blocks
   const auto streamable_blocks = layer_streamer.getNBlocks(
       block_indices.size(),
-      BlockExclusionParams{.exclusion_center_m = exclusion_center_m,
-                           .exclusion_radius_m = kBlockRadiusLimitM,
-                           .block_size_m = kBlockSizeM});
+      [&]() {
+        BlockExclusionParams p;
+        p.exclusion_center_m = exclusion_center_m;
+        p.exclusion_radius_m = kBlockRadiusLimitM;
+        p.block_size_m = kBlockSizeM;
+        return p;
+      }());
   EXPECT_LT(streamable_blocks.size(), block_indices.size());
 
   // Check blocks not outside the exclusion radius.

@@ -1,6 +1,8 @@
 from setuptools import setup
 import os
+import platform
 import subprocess
+import sys
 
 # Note on version postfix:
 #   Use .devX on the developer's branch
@@ -12,8 +14,8 @@ NVBLOX_VERSION = f'{NVBLOX_VERSION_NUMBER}{NVBLOX_VERSION_PATCH}'
 
 
 def get_version_with_platform_tag() -> str:
-    """Get version with cuda and ubuntu tags appended"""
-    return f'{NVBLOX_VERSION}+cu{get_cuda_major_version()}ubuntu{get_ubuntu_major_version()}'
+    """Get version with cuda and platform tags appended"""
+    return f'{NVBLOX_VERSION}+cu{get_cuda_major_version()}{get_platform_tag()}'
 
 
 def get_cuda_major_version() -> str:
@@ -21,9 +23,16 @@ def get_cuda_major_version() -> str:
     return os.environ.get('CUDA_VERSION', '').split('.')[0]
 
 
-def get_ubuntu_major_version() -> str:
-    """Get the major Ubuntu version from the system."""
-    return subprocess.check_output(['lsb_release', '-rs']).decode().strip().split('.')[0]
+def get_platform_tag() -> str:
+    """Get a platform tag for the version string."""
+    if sys.platform == 'win32':
+        return f'win{platform.release()}'
+    try:
+        ubuntu_ver = subprocess.check_output(
+            ['lsb_release', '-rs']).decode().strip().split('.')[0]
+        return f'ubuntu{ubuntu_ver}'
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return platform.system().lower()
 
 
 def get_git_sha() -> str:
@@ -63,7 +72,11 @@ def get_git_sha() -> str:
 def get_expected_wheel_filename(build_number: str) -> str:
     """Get the expected wheel filename for the current version/build of nvblox_torch."""
     version = get_version_with_platform_tag()
-    return f'nvblox_torch-{version}-{build_number}-py3-none-linux_x86_64.whl'
+    if sys.platform == 'win32':
+        plat_tag = 'win_amd64'
+    else:
+        plat_tag = 'linux_x86_64'
+    return f'nvblox_torch-{version}-{build_number}-py3-none-{plat_tag}.whl'
 
 
 def create_version_file() -> None:

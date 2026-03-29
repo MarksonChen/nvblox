@@ -281,7 +281,7 @@ static void splitImageOnGPUTemplate(
   // - 1 thread per pixel
   // - 8 x 8 threads per thread block
   // - N x M thread blocks get 1 thread per pixel
-  constexpr dim3 kThreadsPerThreadBlock(8, 8, 1);
+  const dim3 kThreadsPerThreadBlock(8, 8, 1);
   const dim3 num_blocks(divideRoundUp(input.cols(), kThreadsPerThreadBlock.x),
                         divideRoundUp(input.rows(), kThreadsPerThreadBlock.y),
                         1);
@@ -337,7 +337,7 @@ void ImageMasker::splitImageOnGPU(
   // - 1 thread per pixel
   // - 8 x 8 threads per thread block
   // - N x M thread blocks get 1 thread per pixel
-  constexpr dim3 kThreadsPerThreadBlock(8, 8, 1);
+  const dim3 kThreadsPerThreadBlock(8, 8, 1);
   const dim3 num_blocks_depth(
       divideRoundUp(depth_input.cols(), kThreadsPerThreadBlock.x),
       divideRoundUp(depth_input.rows(), kThreadsPerThreadBlock.y), 1);

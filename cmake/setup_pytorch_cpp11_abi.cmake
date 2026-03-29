@@ -5,26 +5,39 @@
 if(BUILD_PYTORCH_WRAPPER)
   # Detect PyTorch ABI if not explicitly set by user
   if(NOT DEFINED PRE_CXX11_ABI_LINKABLE)
-    execute_process(
-      COMMAND python3 -c
-              "import torch; print(int(torch._C._GLIBCXX_USE_CXX11_ABI))"
-      OUTPUT_VARIABLE PYTORCH_CXX11_ABI
-      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
-      RESULT_VARIABLE PYTORCH_DETECT_RESULT)
-
-    if(PYTORCH_DETECT_RESULT EQUAL 0)
-      # PyTorch found - match its ABI
-      if(PYTORCH_CXX11_ABI EQUAL 0)
-        set(PRE_CXX11_ABI_DEFAULT ON)
-        message(STATUS "Detected PyTorch with pre-CXX11 ABI")
-      else()
-        set(PRE_CXX11_ABI_DEFAULT OFF)
-        message(STATUS "Detected PyTorch with CXX11 ABI")
-      endif()
-    else()
-      # PyTorch not found - default to CXX11 ABI
+    if(MSVC)
+      # MSVC does not use libstdc++ — ABI compat flag is irrelevant
       set(PRE_CXX11_ABI_DEFAULT OFF)
-      message(STATUS "PyTorch not detected, defaulting to CXX11 ABI")
+      message(STATUS "MSVC detected, skipping GLIBCXX ABI detection")
+    else()
+      # Use "python3" on Unix, "python" on Windows (MinGW/Clang case)
+      if(WIN32)
+        set(_PYTHON_CMD python)
+      else()
+        set(_PYTHON_CMD python3)
+      endif()
+
+      execute_process(
+        COMMAND ${_PYTHON_CMD} -c
+                "import torch; print(int(torch._C._GLIBCXX_USE_CXX11_ABI))"
+        OUTPUT_VARIABLE PYTORCH_CXX11_ABI
+        OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
+        RESULT_VARIABLE PYTORCH_DETECT_RESULT)
+
+      if(PYTORCH_DETECT_RESULT EQUAL 0)
+        # PyTorch found - match its ABI
+        if(PYTORCH_CXX11_ABI EQUAL 0)
+          set(PRE_CXX11_ABI_DEFAULT ON)
+          message(STATUS "Detected PyTorch with pre-CXX11 ABI")
+        else()
+          set(PRE_CXX11_ABI_DEFAULT OFF)
+          message(STATUS "Detected PyTorch with CXX11 ABI")
+        endif()
+      else()
+        # PyTorch not found - default to CXX11 ABI
+        set(PRE_CXX11_ABI_DEFAULT OFF)
+        message(STATUS "PyTorch not detected, defaulting to CXX11 ABI")
+      endif()
     endif()
   endif()
 

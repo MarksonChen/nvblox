@@ -39,7 +39,7 @@ std::size_t ImageCacheKeyHash::operator()(const ImageCacheKey& key) const {
 template <typename ImageType>
 ImageType* ImageCache<ImageType>::get(const int rows, const int cols,
                                       const MemoryType memory_type) {
-  ImageCacheKey key = {.rows = rows, .cols = cols, .memory_type = memory_type};
+  ImageCacheKey key = {rows, cols, memory_type};
   auto it = image_cache_.find(key);
   if (it == image_cache_.end()) {
     LOG(INFO) << "Allocating a new cached image";

@@ -12,6 +12,9 @@ endfunction()
 # -------------------------------------------------------------------
 
 function(add_host_compiler_option target_name option)
+  if(MSVC)
+    return()
+  endif()
   target_compile_options(${target_name}
                          PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${option}>)
 
@@ -44,43 +47,56 @@ function(set_nvblox_compiler_options_internal target_name enable_warnings)
   # target_compile_features(${target_name} PRIVATE cxx_std_17) Enable position
   # independent code
   set_property(TARGET ${target_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-  # Better output for profiling
-  add_host_compiler_option(${target_name} "-fno-omit-frame-pointer")
-  # Flag to use relative RPATHs. This allows the libraries to find each other
-  # also when they are distributed.
-  set_property(TARGET ${target_name} PROPERTY CMAKE_BUILD_RPATH_USE_ORIGIN on)
 
-  # Use relative RPATHs. This allows the libraries to find each other also when
-  # they are distributed.
-  set_target_properties(${target_name} PROPERTIES BUILD_RPATH_USE_ORIGIN on)
-
-  # c++17 compilation. We use c++17 features.
-  add_host_compiler_option(${target_name} "-std=gnu++17")
+  if(MSVC)
+    target_compile_options(${target_name} PRIVATE
+      $<$<COMPILE_LANGUAGE:CXX>:/std:c++17>)
+    target_compile_options(${target_name} PRIVATE
+      $<$<COMPILE_LANGUAGE:CXX>:/Oy->)
+  else()
+    add_host_compiler_option(${target_name} "-fno-omit-frame-pointer")
+    add_host_compiler_option(${target_name} "-std=gnu++17")
+    set_property(TARGET ${target_name} PROPERTY CMAKE_BUILD_RPATH_USE_ORIGIN on)
+    set_target_properties(${target_name} PROPERTIES BUILD_RPATH_USE_ORIGIN on)
+  endif()
 
   # ############################################################################
   # PREPROCESSOR DIRECTIVES
   # ############################################################################
-  # Directive for pre-cxx11 linkage support
-  target_compile_definitions(
-    ${target_name}
-    PRIVATE "$<$<BOOL:${PRE_CXX11_ABI_LINKABLE}>:_GLIBCXX_USE_CXX11_ABI=0>")
+  # Prevent <windows.h> min/max macros from colliding with std::numeric_limits.
+  # Define _USE_MATH_DEFINES so M_PI is available from <cmath>.
+  if(WIN32)
+    target_compile_definitions(${target_name} PRIVATE
+      NOMINMAX WIN32_LEAN_AND_MEAN _USE_MATH_DEFINES)
+  endif()
+  # Directive for pre-cxx11 linkage support (GCC/libstdc++ only)
+  if(NOT MSVC)
+    target_compile_definitions(
+      ${target_name}
+      PRIVATE "$<$<BOOL:${PRE_CXX11_ABI_LINKABLE}>:_GLIBCXX_USE_CXX11_ABI=0>")
+  endif()
   # Nvblox directive for pre-cxx11 linkage support
   target_compile_definitions(
     ${target_name}
     PRIVATE "$<$<BOOL:${PRE_CXX11_ABI_LINKABLE}>:PRE_CXX11_ABI_LINKABLE>")
   # Wrap cub:: namespace into nvblox::cub to avoid conflicts when other modules
   # use CUB compiled with different settings.
-  target_compile_definitions(${target_name}
-                             PRIVATE CUB_WRAPPED_NAMESPACE=nvblox)
-  # Disable Thrust's architecture-dependent ABI namespace (e.g.
-  # THRUST_200700_900_NS) to ensure consistent symbols between nvcc and gcc
-  # compiled code. Without this, gcc doesn't know which architectures nvcc
-  # compiled for, causing linker errors. THRUST_IGNORE_ABI_NAMESPACE_ERROR
-  # suppresses the safety warning.
-  target_compile_definitions(${target_name}
-                             PRIVATE THRUST_DISABLE_ABI_NAMESPACE)
-  target_compile_definitions(${target_name}
-                             PRIVATE THRUST_IGNORE_ABI_NAMESPACE_ERROR)
+  # On MSVC, these namespace wrapping defines break stdgpu's Thrust usage
+  # (execution.h can't find thrust::execution_policy). MSVC/NVCC handles the
+  # symbol resolution differently from GCC and doesn't need these workarounds.
+  if(NOT MSVC)
+    target_compile_definitions(${target_name}
+                               PRIVATE CUB_WRAPPED_NAMESPACE=nvblox)
+    # Disable Thrust's architecture-dependent ABI namespace (e.g.
+    # THRUST_200700_900_NS) to ensure consistent symbols between nvcc and gcc
+    # compiled code. Without this, gcc doesn't know which architectures nvcc
+    # compiled for, causing linker errors. THRUST_IGNORE_ABI_NAMESPACE_ERROR
+    # suppresses the safety warning.
+    target_compile_definitions(${target_name}
+                               PRIVATE THRUST_DISABLE_ABI_NAMESPACE)
+    target_compile_definitions(${target_name}
+                               PRIVATE THRUST_IGNORE_ABI_NAMESPACE_ERROR)
+  endif()
   # Needed to ensure that pytorch use glog
   target_compile_definitions(${target_name} PRIVATE C10_USE_GLOG=1)
 
@@ -97,20 +113,33 @@ function(set_nvblox_compiler_options_internal target_name enable_warnings)
   # gcc SANITIZER FLAGS
   # ############################################################################
   if(USE_SANITIZER)
-    add_host_compiler_option(${target_name} "-fsanitize=address")
-    target_link_options(${target_name} PRIVATE "-fsanitize=address")
+    if(MSVC)
+      target_compile_options(${target_name} PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:/fsanitize=address>)
+    else()
+      add_host_compiler_option(${target_name} "-fsanitize=address")
+      target_link_options(${target_name} PRIVATE "-fsanitize=address")
+    endif()
   endif()
 
   # ############################################################################
   # EXTENDED WARNINGS
   # ############################################################################
   if(enable_warnings)
-    add_host_compiler_option(${target_name} "-Wall")
-    add_host_compiler_option(${target_name} "-Wextra")
-    add_host_compiler_option(${target_name} "-Wshadow")
-
-    if(WARNING_AS_ERROR)
-      add_host_compiler_option(${target_name} "-Werror")
+    if(MSVC)
+      target_compile_options(${target_name} PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:/W3>)
+      if(WARNING_AS_ERROR)
+        target_compile_options(${target_name} PRIVATE
+          $<$<COMPILE_LANGUAGE:CXX>:/WX>)
+      endif()
+    else()
+      add_host_compiler_option(${target_name} "-Wall")
+      add_host_compiler_option(${target_name} "-Wextra")
+      add_host_compiler_option(${target_name} "-Wshadow")
+      if(WARNING_AS_ERROR)
+        add_host_compiler_option(${target_name} "-Werror")
+      endif()
     endif()
   endif()
 
@@ -119,25 +148,28 @@ function(set_nvblox_compiler_options_internal target_name enable_warnings)
   # ############################################################################
   string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_LOWER)
   if(CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
-    add_host_compiler_option(${target_name} "-g")
-    add_host_compiler_option(${target_name} "-O0")
-
+    if(NOT MSVC)
+      add_host_compiler_option(${target_name} "-g")
+      add_host_compiler_option(${target_name} "-O0")
+    endif()
     add_device_compiler_option(${target_name} "--debug")
     add_device_compiler_option(${target_name} "--device-debug")
     add_device_compiler_option(${target_name} "-O0")
 
   elseif(CMAKE_BUILD_TYPE_LOWER STREQUAL "relwithdebinfo")
-    add_host_compiler_option(${target_name} "-g")
-    add_host_compiler_option(${target_name} "-O2")
-
+    if(NOT MSVC)
+      add_host_compiler_option(${target_name} "-g")
+      add_host_compiler_option(${target_name} "-O2")
+    endif()
     add_device_compiler_option(${target_name} "--debug")
     add_device_compiler_option(${target_name} "--generate-line-info")
     add_device_compiler_option(${target_name} "-O2")
 
   elseif(CMAKE_BUILD_TYPE_LOWER STREQUAL "release")
-    add_host_compiler_option(${target_name} "-O3")
-    add_host_compiler_option(${target_name} "-DNDEBUG")
-
+    if(NOT MSVC)
+      add_host_compiler_option(${target_name} "-O3")
+      add_host_compiler_option(${target_name} "-DNDEBUG")
+    endif()
     add_device_compiler_option(${target_name} "-DNDEBUG")
     add_device_compiler_option(${target_name} "-O3")
   else()

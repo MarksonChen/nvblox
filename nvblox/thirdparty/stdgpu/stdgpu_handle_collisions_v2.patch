@@ -1,0 +1,13 @@
+diff --git a/src/stdgpu/impl/unordered_base_detail.cuh b/src/stdgpu/impl/unordered_base_detail.cuh
+index ad72e0f..8a47ea7 100644
+--- a/src/stdgpu/impl/unordered_base_detail.cuh
++++ b/src/stdgpu/impl/unordered_base_detail.cuh
+@@ -1258,7 +1258,7 @@ unordered_base<Key, Value, KeyFromValue, Hash, KeyEqual, Allocator>::createDevic
+     // excess count is estimated by the expected collision count:
+     // - Keep the amount although it also counts bucket elements as this is based on assuming a uniform distribution
+     // - Increase amount by 1 since insertion expects a non-empty excess list also in case of no collision
+-    index_t excess_count = expected_collisions(bucket_count, capacity) + 1;
++    index_t excess_count = bucket_count;
+ 
+     index_t total_count = bucket_count + excess_count;
+ 

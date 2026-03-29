@@ -4,13 +4,19 @@ include(GoogleTest)
 file(INSTALL "${CMAKE_CURRENT_SOURCE_DIR}/data"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
-# Copy some (python) visualization tools
-file(CREATE_LINK
-     "${CMAKE_CURRENT_SOURCE_DIR}/visualization/visualize_csv_depth_image.py"
-     "${CMAKE_CURRENT_BINARY_DIR}/visualize_csv_depth_image.py" SYMBOLIC)
-file(CREATE_LINK
-     "${CMAKE_CURRENT_SOURCE_DIR}/../visualization/visualize_mesh.py"
-     "${CMAKE_CURRENT_BINARY_DIR}/visualize_mesh.py" SYMBOLIC)
+# Copy some (python) visualization tools (optional — may not exist in all checkouts)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/visualization/visualize_csv_depth_image.py")
+  file(CREATE_LINK
+       "${CMAKE_CURRENT_SOURCE_DIR}/visualization/visualize_csv_depth_image.py"
+       "${CMAKE_CURRENT_BINARY_DIR}/visualize_csv_depth_image.py"
+       SYMBOLIC COPY_ON_ERROR)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../visualization/visualize_mesh.py")
+  file(CREATE_LINK
+       "${CMAKE_CURRENT_SOURCE_DIR}/../visualization/visualize_mesh.py"
+       "${CMAKE_CURRENT_BINARY_DIR}/visualize_mesh.py"
+       SYMBOLIC COPY_ON_ERROR)
+endif()
 
 # A library containing functions used by many tests.
 add_nvblox_static_library(
@@ -200,8 +206,10 @@ if(NOT USE_SANITIZER)
     add_nvblox_executable(
       run_memcpy_on_default_cuda_stream SOURCE_FILES
       run_memcpy_on_default_cuda_stream.cpp LINK_LIBRARIES_PUBLIC nvblox_lib)
-    add_test(test_default_stream_utilization bash
-             ${CMAKE_CURRENT_SOURCE_DIR}/check_default_stream_utilization.sh)
+    if(NOT WIN32)
+      add_test(test_default_stream_utilization bash
+               ${CMAKE_CURRENT_SOURCE_DIR}/check_default_stream_utilization.sh)
+    endif()
   endif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
 endif(NOT USE_SANITIZER)
 

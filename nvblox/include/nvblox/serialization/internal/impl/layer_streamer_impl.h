@@ -59,9 +59,7 @@ std::vector<Index3D> LayerStreamerBase<LayerType>::getNBlocks(
     if (should_block_be_streamed) {
       ++num_blocks_streamed;
     }
-    return {.should_block_be_streamed = should_block_be_streamed,
-            .block_index_invalid = false,
-            .streaming_limit_reached = !should_block_be_streamed};
+    return {should_block_be_streamed, false, !should_block_be_streamed};
   };
 
   // Stream N highest priority blocks
@@ -81,17 +79,13 @@ std::vector<Index3D> LayerStreamerBase<LayerType>::getNBytesOfBlocks(
         layer.getBlockAtIndex(idx);
     // If the mesh block has been deallocated, don't stream and indicate invalid
     if (!block_ptr) {
-      return {.should_block_be_streamed = false,
-              .block_index_invalid = true,
-              .streaming_limit_reached = false};
+      return {false, true, false};
     }
     // The bytes that would be sent if we sent this block
     num_bytes_streamed += sizeInBytes(block_ptr.get());
     // If we have enough bandwidth send, otherwise stop streaming.
     const bool should_stream = num_bytes_streamed < num_bytes;
-    return {.should_block_be_streamed = should_stream,
-            .block_index_invalid = false,
-            .streaming_limit_reached = !should_stream};
+    return {should_stream, false, !should_stream};
   };
 
   // Stream N highest priority blocks

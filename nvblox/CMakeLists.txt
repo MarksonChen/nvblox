@@ -40,6 +40,11 @@ include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 # ##############################################################################
 # LIBRARIES #
 # ##############################################################################
+# On Windows, automatically export all symbols from shared libraries so that
+# consumers (e.g. py_nvblox) can link against the DLL.
+if(WIN32)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 # NOTE(alexmillane): nvblox (unfortunately) is split into two libraries,
 # "nvblox_gpu_hash" which wraps our interactions with stdgpu and "nvblox_lib"
 # which only interacts with our gpu hash wrapper. Ideally, I would have liked to

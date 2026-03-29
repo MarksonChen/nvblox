@@ -89,12 +89,16 @@ void TsdfZeroCrossingsExtractorCPU::computeZeroCrossingsFromAboveOnCPUInBlock(
           // Ignore what seems to be false positive from gcc:
           // ‘last_tsdf_voxel.nvblox::TsdfVoxel::distance’ may be used
           // uninitialized in this function.
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
           const Vector3f p_L_crossing = getZeroCrossing(
               voxel_idx_below, distance_at_vox_above, distance_at_vox_below,
               block_idx, voxel_size, block_size);
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
           // Add the crossing to the list for output.
           p_L_crossings_vec_.push_back(p_L_crossing);
         }
