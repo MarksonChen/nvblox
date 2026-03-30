@@ -93,6 +93,7 @@ function(set_nvblox_compiler_options_internal target_name enable_warnings)
   target_compile_definitions(${target_name}
                              PRIVATE THRUST_IGNORE_ABI_NAMESPACE_ERROR)
   # Needed to ensure that pytorch use glog
+  # Needed to ensure that pytorch uses glog
   target_compile_definitions(${target_name} PRIVATE C10_USE_GLOG=1)
 
   # Optionally set number of elements of nvblox's feature array. If not set, a

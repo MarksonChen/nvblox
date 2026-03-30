@@ -46,6 +46,6 @@ struct Scene : torch::CustomClassHolder {
     return c10::make_intrusive<Scene>();
   }
 
-  void toMapper(c10::intrusive_ptr<Mapper> mapper, long mapper_id = -1);
+  void toMapper(c10::intrusive_ptr<Mapper> mapper, int64_t mapper_id = -1);
 };
 }  // namespace pynvblox

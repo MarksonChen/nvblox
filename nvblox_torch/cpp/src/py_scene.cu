@@ -91,7 +91,7 @@ void Scene::addPrimitive(std::string type, std::vector<double> prim_params) {
   }
 }
 
-void Scene::toMapper(c10::intrusive_ptr<Mapper> mapper, long mapper_id) {
+void Scene::toMapper(c10::intrusive_ptr<Mapper> mapper, int64_t mapper_id) {
   // Which mappers ids do we modify?
   std::pair start_end_id = {0, mapper->getNumMappers()};
   if (mapper_id >= 0) {
@@ -101,7 +101,7 @@ void Scene::toMapper(c10::intrusive_ptr<Mapper> mapper, long mapper_id) {
   CHECK_GE(start_end_id.first, 0);
   CHECK_LE(start_end_id.second, mapper->getNumMappers());
 
-  for (long i_id = start_end_id.first; i_id < start_end_id.second; ++i_id) {
+  for (int64_t i_id = start_end_id.first; i_id < start_end_id.second; ++i_id) {
     std::shared_ptr<nvblox::Mapper> nvblox_mapper =
         mapper->getNvbloxMapper(i_id);
 

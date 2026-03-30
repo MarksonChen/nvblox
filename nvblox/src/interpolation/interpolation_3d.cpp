@@ -29,7 +29,7 @@ bool interpolateOnCPU(const Vector3f& p_L, const TsdfLayer& layer,
     return voxel.distance;
   };
   constexpr float kMinWeight = 1e-4;
-  auto voxel_valid_lambda = [](const TsdfVoxel& voxel) -> bool {
+  auto voxel_valid_lambda = [kMinWeight](const TsdfVoxel& voxel) -> bool {
     return voxel.weight > kMinWeight;
   };
   return internal::interpolateMemberOnCPU<TsdfVoxel>(

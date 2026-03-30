@@ -72,11 +72,11 @@ void Mapper::addMapper(double voxel_size_m, std::string projective_layer_type,
   mappers_.push_back(mapper);
 }
 
-long Mapper::getNumMappers() const { return mappers_.size(); }
+int64_t Mapper::getNumMappers() const { return mappers_.size(); }
 
-std::shared_ptr<nvblox::Mapper> Mapper::getNvbloxMapper(long mapper_id) {
+std::shared_ptr<nvblox::Mapper> Mapper::getNvbloxMapper(int64_t mapper_id) {
   CHECK_GE(mapper_id, 0);
-  CHECK_LT(mapper_id, static_cast<long>(mappers_.size()));
+  CHECK_LT(mapper_id, static_cast<int64_t>(mappers_.size()));
   return mappers_[mapper_id];
 }
 
@@ -102,7 +102,7 @@ void integrateDepthWithSensorType(std::shared_ptr<nvblox::Mapper> mapper,
 void Mapper::integrateDepth(torch::Tensor depth_frame_t, torch::Tensor T_L_C_t,
                             c10::intrusive_ptr<PySensor> sensor,
                             std::optional<torch::Tensor> mask_frame_t,
-                            long mapper_id) {
+                            int64_t mapper_id) {
   CHECK_LT(mapper_id, static_cast<int>(mappers_.size()));
   ALL_ON_GPU_OR_RETURN(depth_frame_t, mask_frame_t);
 
@@ -151,7 +151,7 @@ void integrateColorWithSensorType(std::shared_ptr<nvblox::Mapper> mapper,
 void Mapper::integrateColor(torch::Tensor color_frame_t, torch::Tensor T_L_C_t,
                             c10::intrusive_ptr<PySensor> sensor,
                             std::optional<torch::Tensor> mask_frame_t,
-                            long mapper_id) {
+                            int64_t mapper_id) {
   CHECK_LT(mapper_id, static_cast<int>(mappers_.size()));
   ALL_ON_GPU_OR_RETURN(color_frame_t, mask_frame_t);
 
@@ -198,7 +198,7 @@ void Mapper::integrateFeatures(torch::Tensor feature_frame_t,
                                torch::Tensor T_L_C_t,
                                c10::intrusive_ptr<PySensor> sensor,
                                std::optional<torch::Tensor> mask_frame_t,
-                               long mapper_id) {
+                               int64_t mapper_id) {
   CHECK_LT(mapper_id, static_cast<int>(mappers_.size()));
   ALL_ON_GPU_OR_RETURN(feature_frame_t, mask_frame_t);
 
@@ -224,7 +224,7 @@ void Mapper::integrateFeatures(torch::Tensor feature_frame_t,
   }
 }
 
-void Mapper::updateEsdf(long mapper_id) {
+void Mapper::updateEsdf(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->updateEsdf();
   } else {
@@ -234,7 +234,7 @@ void Mapper::updateEsdf(long mapper_id) {
   }
 }
 
-void Mapper::updateColorMesh(long mapper_id) {
+void Mapper::updateColorMesh(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->updateColorMesh();
   } else {
@@ -244,7 +244,7 @@ void Mapper::updateColorMesh(long mapper_id) {
   }
 }
 
-void Mapper::updateFeatureMesh(long mapper_id) {
+void Mapper::updateFeatureMesh(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->updateFeatureMesh();
   } else {
@@ -254,7 +254,7 @@ void Mapper::updateFeatureMesh(long mapper_id) {
   }
 }
 
-c10::intrusive_ptr<pynvblox::PyColorMesh> Mapper::getColorMesh(long mapper_id) {
+c10::intrusive_ptr<pynvblox::PyColorMesh> Mapper::getColorMesh(int64_t mapper_id) {
   CHECK_LT(static_cast<size_t>(mapper_id), mappers_.size());
   CHECK_GE(mapper_id, 0);
 
@@ -272,7 +272,7 @@ c10::intrusive_ptr<pynvblox::PyColorMesh> Mapper::getColorMesh(long mapper_id) {
 }
 
 c10::intrusive_ptr<pynvblox::PyFeatureMesh> Mapper::getFeatureMesh(
-    long mapper_id) {
+    int64_t mapper_id) {
   CHECK_LT(static_cast<size_t>(mapper_id), mappers_.size());
   CHECK_GE(mapper_id, 0);
 
@@ -291,7 +291,7 @@ c10::intrusive_ptr<pynvblox::PyFeatureMesh> Mapper::getFeatureMesh(
 
 void Mapper::fullUpdate(torch::Tensor depth_frame_t,
                         torch::Tensor color_frame_t, torch::Tensor T_L_C_t,
-                        torch::Tensor intrinsics_t, long mapper_id) {
+                        torch::Tensor intrinsics_t, int64_t mapper_id) {
   auto mapper = mappers_[mapper_id];
 
   int height = depth_frame_t.sizes()[0];
@@ -312,7 +312,7 @@ void Mapper::fullUpdate(torch::Tensor depth_frame_t,
   mapper->updateFeatureMesh();
 }
 
-void Mapper::decayTsdf(long mapper_id) {
+void Mapper::decayTsdf(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->decayTsdfAllVoxels();
 
@@ -323,7 +323,7 @@ void Mapper::decayTsdf(long mapper_id) {
   }
 }
 
-void Mapper::decayOccupancy(long mapper_id) {
+void Mapper::decayOccupancy(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->decayOccupancyAllVoxels();
 
@@ -334,7 +334,7 @@ void Mapper::decayOccupancy(long mapper_id) {
   }
 }
 
-void Mapper::clear(long mapper_id) {
+void Mapper::clear(int64_t mapper_id) {
   if (mapper_id >= 0) {
     mappers_[mapper_id]->occupancy_layer().clear();
     mappers_[mapper_id]->tsdf_layer().clear();
@@ -356,22 +356,22 @@ void Mapper::clear(long mapper_id) {
   }
 }
 
-c10::intrusive_ptr<PyTsdfLayer> Mapper::tsdf_layer(const long mapper_id) {
+c10::intrusive_ptr<PyTsdfLayer> Mapper::tsdf_layer(const int64_t mapper_id) {
   return get_layer<PyTsdfLayer>(mapper_id, "tsdf",
                                 nvblox::ProjectiveLayerType::kTsdf);
 }
 
-c10::intrusive_ptr<PyColorLayer> Mapper::color_layer(const long mapper_id) {
+c10::intrusive_ptr<PyColorLayer> Mapper::color_layer(const int64_t mapper_id) {
   return get_layer<PyColorLayer>(mapper_id, "color");
 }
 
-c10::intrusive_ptr<PyFeatureLayer> Mapper::feature_layer(const long mapper_id) {
+c10::intrusive_ptr<PyFeatureLayer> Mapper::feature_layer(const int64_t mapper_id) {
   return get_layer<PyFeatureLayer>(mapper_id, "feature");
 }
 
 template <typename PyLayerType>
 c10::intrusive_ptr<PyLayerType> Mapper::get_layer(
-    const long mapper_id, const std::string& name,
+    const int64_t mapper_id, const std::string& name,
     nvblox::ProjectiveLayerType required_projective_layer_type) {
   CHECK_GE(mapper_id, 0);
   CHECK_LT(static_cast<size_t>(mapper_id), mappers_.size());
@@ -401,7 +401,7 @@ torch::Tensor Mapper::renderDepthImage(torch::Tensor camera_pose,
                                        torch::Tensor intrinsics,
                                        int64_t img_height, int64_t img_width,
                                        double max_ray_length, int64_t max_steps,
-                                       long mapper_id) {
+                                       int64_t mapper_id) {
   auto mapper = mappers_[mapper_id];
 
   // TODO: This 4.0 is the default truncation distance in
@@ -435,7 +435,7 @@ torch::Tensor Mapper::renderDepthImage(torch::Tensor camera_pose,
 std::vector<torch::Tensor> Mapper::renderDepthAndColorImage(
     torch::Tensor camera_pose, torch::Tensor intrinsics, int64_t img_height,
     int64_t img_width, double max_ray_length, int64_t max_steps,
-    long mapper_id) {
+    int64_t mapper_id) {
   auto mapper = mappers_[mapper_id];
   // TODO: This 4.0 is the default truncation distance in
   // projective_integrator_base.h This should be made a global constant and
@@ -472,13 +472,13 @@ std::vector<torch::Tensor> Mapper::renderDepthAndColorImage(
   return {depth_image_t, color_image_t};
 }
 
-bool Mapper::outputColorMeshPly(std::string mesh_output_path, long mapper_id) {
+bool Mapper::outputColorMeshPly(std::string mesh_output_path, int64_t mapper_id) {
   auto mapper = mappers_[mapper_id];
   return nvblox::io::outputColorMeshLayerToPly(mapper->color_mesh_layer(),
                                                mesh_output_path.c_str());
 }
 
-bool Mapper::outputBloxMap(std::string blox_output_path, long mapper_id) {
+bool Mapper::outputBloxMap(std::string blox_output_path, int64_t mapper_id) {
   auto mapper = mappers_[mapper_id];
   const bool result = mapper->saveLayerCake(blox_output_path);
   return result;
@@ -599,7 +599,7 @@ torch::Tensor Mapper::queryMultiOccupancy(torch::Tensor output_tensor,
 
 torch::Tensor Mapper::queryEsdf(torch::Tensor output_tensor,
                                 const torch::Tensor query_sphere,
-                                long mapper_id) {
+                                int64_t mapper_id) {
   const int64_t num_queries = query_sphere.sizes()[0];
   // Input checks.
   if (!checkAllOnGPU(output_tensor, query_sphere)) {
@@ -646,7 +646,7 @@ torch::Tensor Mapper::queryEsdf(torch::Tensor output_tensor,
 
 torch::Tensor Mapper::queryFeatures(torch::Tensor output_tensor,
                                     const torch::Tensor query_positions,
-                                    long mapper_id) {
+                                    int64_t mapper_id) {
   const int64_t num_queries = query_positions.sizes()[0];
 
   // Input checks.
@@ -710,7 +710,7 @@ torch::Tensor Mapper::queryFeatures(torch::Tensor output_tensor,
 
 torch::Tensor Mapper::queryTsdf(torch::Tensor output_tensor,
                                 const torch::Tensor query_positions,
-                                long mapper_id) {
+                                int64_t mapper_id) {
   const int64_t num_queries = query_positions.sizes()[0];
 
   // Input checks.
@@ -784,7 +784,7 @@ torch::Tensor Mapper::queryMultiTsdf(torch::Tensor output_tensor,
   return output_tensor;
 }
 
-void Mapper::loadFromFile(std::string file_path, long mapper_id) {
+void Mapper::loadFromFile(std::string file_path, int64_t mapper_id) {
   // TODO: How to load?
   // mapper_.reset(new RgbdMapper(file_path, MemoryType::kDevice));
   mappers_[mapper_id]->loadMap(file_path.c_str());
