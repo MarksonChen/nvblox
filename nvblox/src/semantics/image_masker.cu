@@ -62,7 +62,7 @@ __global__ void splitColorImageKernel(const Color* input, const uint8_t* mask,
   if (masked_depth_overlay) {
     const Color input_color = image::access(row_idx, col_idx, cols, input);
     image::access(row_idx, col_idx, cols, masked_depth_overlay) =
-        Color(std::fmax(input_color.r(), is_masked * 255u), input_color.g(),
+        Color(static_cast<uint8_t>(::fmaxf(static_cast<float>(input_color.r()), static_cast<float>(is_masked * 255u))), input_color.g(),
               input_color.b());
   }
 
@@ -157,13 +157,14 @@ __global__ void splitDepthImageKernel(
   if (masked_depth_overlay) {
     constexpr float max_depth_display_m = 20.f;
     constexpr float scale_factor = 255u / max_depth_display_m;
-    const uint8_t scaled_depth = fmin(scale_factor * depth, 255u);
+    const uint8_t scaled_depth =
+        static_cast<uint8_t>(::fminf(scale_factor * depth, 255.0f));
     image::access(row_idx, col_idx, depth_camera.cols(), masked_depth_overlay) =
         Color(scaled_depth, scaled_depth, scaled_depth);
   }
 
   // If the depth is infinite, the input pixel is not masked
-  if (std::isinf(depth)) {
+  if (::isinf(depth)) {
     copyToUnmaskedOutput(depth_input, row_idx, col_idx, depth_camera.cols(),
                          masked_image_invalid_pixel, unmasked_depth_output,
                          masked_depth_output);

@@ -4,19 +4,25 @@ if(USE_SYSTEM_STDGPU)
 else()
   include(FetchContent)
 
-  # Patches to stdgpu. Using latest stdgpu (post-1.3.0) which includes CUDA 13
-  # support, NOMINMAX for Windows, and CMake 4.x compat. The thrust_version_regex,
-  # cuda12_6, and cuda13_0 patches are already integrated upstream.
+  # Patches to stdgpu
   set(apply_patch
       git
       apply
-      # Patch that exposes the "occupied" array. We need this when copying the hash.
+      # Patch that overrides the estimated number of hash collissions by stdgpu
+      # and sets the worst-case number. This is necessary to ensure stability in
+      # case of an extraordinary amount of collisions.
+      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_handle_collisions.patch
+      # Patch that fixes a cmake error in Findthrust in later versions of cmake.
+      # This error has been fixed in more recent version of stdgpu
+      # (https://github.com/stotko/stdgpu/pull/408)
+      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_thrust_version_regex.patch
+      # Patch that exposes the "occupied" array. We need this when copying the
+      # hash.
       ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_expose_occupied.patch
-      # Patch that overrides the estimated number of hash collisions by stdgpu
-      # and sets the worst-case number for stability. Updated for latest stdgpu.
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_handle_collisions_v2.patch
-      # Fix ambiguous to_address call on MSVC/NVCC
-      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_fix_to_address_ambiguity.patch)
+      # Patch that prepends stdgpu namespace to conflicting cuda functions.
+      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_fix_cuda12_6.patch
+      # Patch that fixes deprecated calls in CUDA13
+      ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stdgpu/stdgpu_fix_cuda13_0.patch)
 
   FetchContent_Declare(
     ext_stdgpu
@@ -24,7 +30,7 @@ else()
     PREFIX
     stdgpu
     GIT_REPOSITORY https://github.com/stotko/stdgpu.git
-    GIT_TAG 8125b92baa8e62b508623289096c26cbebc6ff9a
+    GIT_TAG 71a5aef26626eda47d15e5f577ca3b1538ff996a
     PATCH_COMMAND ${apply_patch}
     UPDATE_COMMAND "")
 
@@ -38,10 +44,9 @@ else()
   # Download the files
   FetchContent_MakeAvailable(ext_stdgpu)
 
-  # On MSVC, stdgpu's .cpp files include Thrust headers via iterator.h which
-  # cl.exe cannot parse. Compile them as CUDA instead. We must NOT apply nvblox's
-  # Thrust/CUB namespace wrapping defines to stdgpu, as they cause
-  # "thrust::detail is ambiguous" errors with CUDA 12.8's Thrust.
+  # On MSVC, stdgpu's .cpp files include Thrust headers (iterator.h ->
+  # thrust/detail/pointer.h) which cl.exe cannot parse. Force these to be
+  # compiled as CUDA by NVCC instead.
   if(MSVC)
     set_source_files_properties(
       ${ext_stdgpu_SOURCE_DIR}/src/stdgpu/impl/iterator.cpp
@@ -49,15 +54,12 @@ else()
       ${ext_stdgpu_SOURCE_DIR}/src/stdgpu/impl/device.cpp
       TARGET_DIRECTORY stdgpu
       PROPERTIES LANGUAGE CUDA)
-    # Set C++17 and disable Thrust's architecture-dependent ABI namespace
-    # which causes "thrust::detail is ambiguous" on CUDA 12.8 + MSVC.
     target_compile_options(stdgpu PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/std:c++17>)
-    target_compile_definitions(stdgpu PRIVATE
-      THRUST_DISABLE_ABI_NAMESPACE
-      THRUST_IGNORE_ABI_NAMESPACE_ERROR)
-  else()
-    set_nvblox_compiler_options_nowarnings(stdgpu)
   endif()
+
+  # Apply nvblox compile options to exported targets
+  set_nvblox_compiler_options_nowarnings(stdgpu)
+
   add_library(nvblox_stdgpu INTERFACE)
   target_link_libraries(nvblox_stdgpu INTERFACE stdgpu)
   target_include_directories(

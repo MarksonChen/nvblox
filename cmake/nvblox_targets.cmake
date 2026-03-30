@@ -81,22 +81,17 @@ function(set_nvblox_compiler_options_internal target_name enable_warnings)
     PRIVATE "$<$<BOOL:${PRE_CXX11_ABI_LINKABLE}>:PRE_CXX11_ABI_LINKABLE>")
   # Wrap cub:: namespace into nvblox::cub to avoid conflicts when other modules
   # use CUB compiled with different settings.
-  # On MSVC, these namespace wrapping defines break stdgpu's Thrust usage
-  # (execution.h can't find thrust::execution_policy). MSVC/NVCC handles the
-  # symbol resolution differently from GCC and doesn't need these workarounds.
+  # On MSVC, skip CUB_WRAPPED_NAMESPACE (not needed, causes issues with PyTorch
+  # interop). Keep THRUST_DISABLE_ABI_NAMESPACE on all platforms — required for
+  # stdgpu and nvblox_gpu_hash to have matching Thrust namespace resolution.
   if(NOT MSVC)
     target_compile_definitions(${target_name}
                                PRIVATE CUB_WRAPPED_NAMESPACE=nvblox)
-    # Disable Thrust's architecture-dependent ABI namespace (e.g.
-    # THRUST_200700_900_NS) to ensure consistent symbols between nvcc and gcc
-    # compiled code. Without this, gcc doesn't know which architectures nvcc
-    # compiled for, causing linker errors. THRUST_IGNORE_ABI_NAMESPACE_ERROR
-    # suppresses the safety warning.
-    target_compile_definitions(${target_name}
-                               PRIVATE THRUST_DISABLE_ABI_NAMESPACE)
-    target_compile_definitions(${target_name}
-                               PRIVATE THRUST_IGNORE_ABI_NAMESPACE_ERROR)
   endif()
+  target_compile_definitions(${target_name}
+                             PRIVATE THRUST_DISABLE_ABI_NAMESPACE)
+  target_compile_definitions(${target_name}
+                             PRIVATE THRUST_IGNORE_ABI_NAMESPACE_ERROR)
   # Needed to ensure that pytorch use glog
   target_compile_definitions(${target_name} PRIVATE C10_USE_GLOG=1)
 
